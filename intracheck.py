@@ -2,7 +2,7 @@
 import psycopg2
 import pandas as pd
 import numpy as np
-
+import logging
 def connect(query):
     # Connect to the database
     conn = psycopg2.connect(
@@ -20,7 +20,7 @@ def connect(query):
     cur.close()
     conn.close()
     return results
-
+l =["SPAN","IMSM"]
 CI050_result=connect( """
     SELECT * FROM CI050
     WHERE timeofday IN
@@ -28,7 +28,18 @@ CI050_result=connect( """
     FROM CI050
     GROUP BY margin_type)
     """)
-CI050_df = pd.DataFrame(CI050_result, columns=['date', 'timeofday', 'clearing_member', 'account','margin_type', 'margin'])
+
+K = """
+    SELECT * FROM CI050
+    WHERE timeofday IN
+    (SELECT MIN(timeofday)
+    FROM CI050) AND margin_type in """ + str((l))
+print(K)
+try:
+    CI050_df = pd.DataFrame(CI050_result, columns=['date', 'timeofday', 'clearing_member', 'account','margin_type', 'margin'])
+except:
+    t= logging.log("failure in fetching data from CI050")
+    email.(t)
 
 CC050_result=connect("""
 SELECT * FROM CC050
@@ -52,3 +63,4 @@ df['margindifference']=np.where(df['cc']['margin_type']==df['ci']['margin_type']
                     0)
 
 filtered_df = df.loc[(df['margindifference'] > 0) & (df['margindifference'] < 0)]
+
